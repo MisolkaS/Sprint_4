@@ -1,29 +1,17 @@
-from selenium import webdriver
-from pages.index_page import IndexPage
 import allure
+import pytest
+from pages.index_page import IndexPage
+from data import *
+class TestQuestionAnswer:
+    @pytest.mark.parametrize("question", scooter_rental_info.keys())
+    @allure.title('Проверяем соответствие вопросов и ответов')
+    def test_faq_answers(self, question, driver, index_url):
+        aq_page = IndexPage(driver, index_url)
+        aq_page.open_index_page()
+        aq_page.scroll_to_element()
+        assert aq_page.question_exists(question), f"Вопрос '{question}' не найден на странице."
 
-
-class TestAnswerAndQuestion:
-    driver = None
-
-    @classmethod
-    def setup_class(cls):
-        cls.driver = webdriver.Firefox()
-        cls.index_url = "https://qa-scooter.praktikum-services.ru"
-
-    @classmethod
-    def teardown_class(cls):
-        cls.driver.quit()
-
-    @allure.description('Проверяем, что все вопросы содержат правильные ответы')
-    def test_click(self):
-        self.driver.get(self.index_url)
-        step1 = IndexPage(self.driver)
-        step1.close_popup_if_present()
-        step1.scroll_to_element()
-        questions_and_answers = step1.collect_questions_and_answers()
-
-        for question, answer in questions_and_answers:
-            expected_answer = step1.scooter_rental_info.get(question)
-            assert answer == expected_answer, f"Ответ на вопрос '{question}' не соответствует ожидаемому."
-
+        aq_page.click_on_question(question)
+        answer_text = aq_page.get_answer_text(question)
+        expected_answer = scooter_rental_info[question]
+        assert answer_text == expected_answer, f"Ответ не совпадает для вопроса: {question}"
